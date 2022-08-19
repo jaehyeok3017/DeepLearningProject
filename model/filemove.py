@@ -9,6 +9,7 @@ def fileList(path_before : str)->list :
         category.append(temp_list[0]) 
 
     temp_set = set(category)
+    result = list(temp_set) 
     return result
 
 
