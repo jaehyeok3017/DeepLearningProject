@@ -1,3 +1,4 @@
+from keras.layers import Convolution2D, ZeroPadding2D, Activation, MaxPooling2D, Dropout, Flatten
 from sklearn.model_selection import train_test_split
 train_x, test_x, train_y, test_y = train_test_split(features, target_classes, test_size=0.30)
 
