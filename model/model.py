@@ -12,6 +12,7 @@ import numpy as np
 from torchvision import datasets
 import glob
 
+
 from keras.layers import Input, Conv2D, Activation, MaxPool2D, Dropout, Flatten, Dense
 from keras.optimizers import Adam
 from keras.models import Model
@@ -28,92 +29,96 @@ def imshow(inp, title=None):
     plt.pause(0.001)
 
 
-def fileCategoriesAppend():
-    categories = []
+categories = []
 
-    for i in range(1, 101):
-        categories.append(f"{i}")
+for i in range(1, 101):
+    categories.append(f"{i}")
 
-    print(categories)
-    return categories
+print(categories)
 
 
-def fileLoad(categories):
-    data_dir = "./data"
-    num_classes = len(categories)
 
-    image_w = 224
-    image_h = 224
+data_dir = "/workspace/2022_ai_study/data"
+num_classes = len(categories)
 
-    pixels = image_w * image_h * 3
+image_w = 224
+image_h = 224
 
-    x = []
-    y = []
+pixels = image_w * image_h * 3
+ 
+x = []
+y = []
 
-    for idx, category in enumerate(categories):
-        label = [0 for i in range(num_classes)]
-        label[idx] = 1
+for idx, category in enumerate(categories):
+    label = [0 for i in range(num_classes)]
+    label[idx] = 1
 
-        image_dir = data_dir + "/" + category
-        files = glob.glob(image_dir + "/*.jpg")
+    image_dir = data_dir + "/" + category
+    files = glob.glob(image_dir + "/*.jpg") 
 
-        for i,f in enumerate(files):
-            img = Image.open(f)
-            img = img.convert("RGB")
-            img = img.resize((image_w, image_h))
-            data = np.asarray(img)
+    for i,f in enumerate(files):
+        img = Image.open(f)
+        img = img.convert("RGB")
+        img = img.resize((image_w, image_h))
+        data = np.asarray(img)
 
-            x.append(data)
-            y.append(label)
+        x.append(data)
+        y.append(label)
 
-            if i % 700 == 0:
-                print(category, " : ", f)
+        if i % 1000 == 0:
+            print(category, " : ", f)
+            
 
-    x = np.array(x)
-    y = np.array(y)
+x = np.array(x)
+y = np.array(y)
+    
+x_train, x_test, y_train, y_test = train_test_split(x, y)
+xy = (x_train, x_test, y_train, y_test)
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y)
-    return x_train, y_train
+x_train = x_train.astype('float32') / 255
+x_test = x_test.astype('float32') / 255
 
 
-def modelGenerate():
-    input = Input(shape=(224, 224, 3))
+from keras.layers import Input, Conv2D, Activation, MaxPool2D, Dropout, Flatten, Dense
+from tensorflow.keras.optimizers import Adam 
+from keras.models import Model
 
-    cnn1 = Conv2D(128, kernel_size=3, activation='relu')(input)
-    cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
-    cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
-    cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
+inputlayer = Input(shape=(224, 224, 3), dtype='float32')
 
-    cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
-    cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
-    cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
-    cnn2 = MaxPool2D(pool_size=3, strides=2)(cnn2)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(inputlayer)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
 
-    cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn2)
-    cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn3)
-    cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn3)
-    cnn3 = MaxPool2D(pool_size=3, strides=2)(cnn3)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = MaxPool2D(pool_size=3, strides=2)(cnn2)
 
-    cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn3)
-    cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn4)
-    cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn4)
-    cnn4 = MaxPool2D(pool_size=3, strides=2)(cnn4)
+cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn2)
+cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn3)
+cnn3 = Conv2D(256, kernel_size=3, activation='relu')(cnn3)
+cnn3 = MaxPool2D(pool_size=3, strides=2)(cnn3)
 
-    dense = Flatten()(cnn4)
-    dense = Dropout(0.2)(dense)
-    dense = Dense(1024, activation='relu')(dense)
-    dense = Dense(1024, activation='relu')(dense)
+cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn3)
+cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn4)
+cnn4 = Conv2D(512, kernel_size=3, activation='relu')(cnn4)
+cnn4 = MaxPool2D(pool_size=3, strides=2)(cnn4)
 
-    output = Dense(1, activation='linear', name='age')(dense)
+dense = Flatten()(cnn4)
+dense = Dropout(0.2)(dense)
+dense = Dense(1024, activation='relu')(dense)
+dense = Dense(1024, activation='relu')(dense)
 
-    model = Model(input, output)
-    model.compile(optimizer=Adam(0.0001), loss='mse', metrics=['mae'])
+output = Dense(1, activation='linear', name='age')(dense)
 
-    model.summary()
-    return model
+model = Model(input, output)
+model.compile(optimizer=Adam(0.0001), loss='mse', metrics=['mae'])
+model.summary()
+    
 
-def modelFit(x_train, y_train, model):
-    model.fit(x_train, y_train, batch_size=30, epochs=5000)
+model.fit(x_train, y_train, batch_size=30, epochs=5000)
 
-x_train, y_train = fileLoad(fileCategoriesAppend())
-modelFit(x_train, y_train, modelGenerate())
+model_json = additional_model.to_json()
+with open("model.json", "w") as json_file : 
+    json_file.write(model_json)
